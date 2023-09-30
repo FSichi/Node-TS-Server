@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { IUsuarioParams } from "../database/models/Usuario";
+import { IUsuario } from "../database/models/Usuario";
 
 export interface IAggregationPipeline {
     $match?: { [key: string]: any };
@@ -11,5 +11,5 @@ export interface IAggregationPipeline {
 
 
 export interface RequestWithUsuario extends Request {
-    usuario?: IUsuarioParams | null;
+    usuario?: IUsuario | null;
 }

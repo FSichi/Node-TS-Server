@@ -1,7 +1,7 @@
 import { response, request, NextFunction, Response } from 'express'
 import jwt from 'jsonwebtoken'
 
-import { UsuarioModel, IUsuarioParams } from '../database/models/Usuario.ts'
+import { UsuarioModel } from '../database/models/Usuario.ts'
 import { handleErrorResponse } from '../messages/HTTPResponse.js'
 import { RequestWithUsuario } from '../interfaces/index.ts'
 
@@ -17,7 +17,7 @@ export const validarJWT = async (req: RequestWithUsuario = request, res: Respons
     try {
         const { uid } = jwt.verify(token, process.env.SECRETORPRIVATEKEY || '') as { uid: string };
 
-        const usuario: IUsuarioParams | null = await UsuarioModel.findById(uid);
+        const usuario = await UsuarioModel.findById(uid);
         const { status, error } = checkUserStatus(usuario);
 
         if (!status) {
