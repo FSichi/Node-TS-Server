@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { check } from 'express-validator';
 
-import { validarCampos } from '../middlewares/index.js';
 import TestController from "../controllers/TestController.ts";
 import { Color } from '../database/enums/index.ts';
+import { validarCampos } from '../middlewares/index.js';
 
 const router = Router();
 const controller = new TestController();

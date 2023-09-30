@@ -10,19 +10,15 @@ class GenericRepository<T extends Document>{
         this.model = model;
     }
 
-    async getAll(query: Record<string, any> = {}, options: Record<string, any> = {}) {
+    async getAll(query: Record<string, any> = {}, options: Record<string, any> = {}): Promise<T[] | undefined> {
         try {
-            if (Object.keys(query).length === 0) {
-                return await this.model.find({}, options);
-            } else {
-                return await this.model.find(query, options);
-            }
+            return await this.model.find(query, options);
         } catch (error: any) {
             handleDatabaseError({ status: 500, error: error });
         }
     }
 
-    async getById(id: string) {
+    async getById(id: string): Promise<T | null | undefined> {
         try {
             return await this.model.findById(id);
         } catch (error: any) {
@@ -30,7 +26,7 @@ class GenericRepository<T extends Document>{
         }
     }
 
-    async getOne(query: Record<string, any> = {}) {
+    async getOne(query: Record<string, any> = {}): Promise<T | null | undefined> {
         try {
             return await this.model.findOne(query);
         } catch (error: any) {
@@ -38,7 +34,7 @@ class GenericRepository<T extends Document>{
         }
     }
 
-    async aggregate(pipeline: IAggregationPipeline[]) {
+    async aggregate(pipeline: IAggregationPipeline[]): Promise<any> {
         try {
             const pipelineStages: PipelineStage[] = pipeline as PipelineStage[];
             return await this.model.aggregate(pipelineStages);
@@ -47,7 +43,7 @@ class GenericRepository<T extends Document>{
         }
     }
 
-    async create(data: Record<string, any>) {
+    async create(data: Record<string, any>): Promise<T | undefined> {
         try {
             return await this.model.create(data);
         } catch (error: any) {
@@ -55,7 +51,7 @@ class GenericRepository<T extends Document>{
         }
     }
 
-    async update(id: string, data: Record<string, any>) {
+    async update(id: string, data: Record<string, any>): Promise<T | null | undefined> {
         try {
             return await this.model.findByIdAndUpdate(id, data, { new: true });
         } catch (error: any) {
@@ -63,7 +59,7 @@ class GenericRepository<T extends Document>{
         }
     }
 
-    async delete(id: string) {
+    async delete(id: string): Promise<T | null | undefined> {
         try {
             return await this.model.findByIdAndDelete(id);
         } catch (error: any) {

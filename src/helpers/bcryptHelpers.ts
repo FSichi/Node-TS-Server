@@ -1,7 +1,5 @@
-// import pkg from 'bcryptjs';
-// const { compareSync, compare, genSaltSync, hashSync } = pkg;
-
-import { compareSync, compare, genSaltSync, hashSync } from 'bcryptjs';
+import pkg from 'bcryptjs';
+const { compareSync, compare, genSaltSync, hashSync } = pkg;
 
 interface IComparePassword {
     currentPassword: string;
@@ -13,17 +11,17 @@ interface IValidPassword {
     passwordHashed: string;
 }
 
-export const comparePassword = async ({ currentPassword, newPassword }: IComparePassword) => {
+export const comparePassword = async ({ currentPassword, newPassword }: IComparePassword): Promise<boolean> => {
     const passwordMatch = await compare(newPassword, currentPassword);
     return passwordMatch;
 };
 
-export const encryptPassword = (password: string) => {
+export const encryptPassword = (password: string): string => {
     const salt = genSaltSync();
     return hashSync(password, salt);
 };
 
-export const checkValidPassword = ({ passwordProvided, passwordHashed }: IValidPassword) => {
+export const checkValidPassword = ({ passwordProvided, passwordHashed }: IValidPassword): boolean => {
     const validPassword = compareSync(passwordProvided, passwordHashed);
     return validPassword;
 }

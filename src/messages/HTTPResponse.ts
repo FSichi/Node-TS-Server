@@ -1,21 +1,18 @@
 import { Response } from "express";
 
-interface IBaseResponse {
-    res: Response;
-    status: number;
-}
-
-interface IResponse extends IBaseResponse {
-    data?: any;
-    error?: IError;
-}
-
 interface IError {
     status: number;
     message: string;
 }
 
-export const handleResponse = ({ res, status, data, error }: IResponse) => {
+interface IResponse {
+    res: Response;
+    status: number;
+    data?: any;
+    error?: IError;
+}
+
+export const handleResponse = ({ res, status, data, error }: IResponse): void => {
 
     const response = error
         ? { status: "FAILED", error: error.message || error }
@@ -24,15 +21,15 @@ export const handleResponse = ({ res, status, data, error }: IResponse) => {
     res.status(status).json(response);
 };
 
-export const handleSuccessResponse = (res: Response, status: number, data: any) => {
+export const handleSuccessResponse = (res: Response, status: number, data: any): void => {
     handleResponse({ res, status, data });
 };
 
-export const handleErrorResponse = (res: Response, error: any) => {
+export const handleErrorResponse = (res: Response, error: any): void => {
     handleResponse({ res, status: error.status || 500, data: null, error });
 };
 
-export const handleErrorLogin = (res: Response, error: any) => {
+export const handleErrorLogin = (res: Response, error: any): void => {
     res.status(error.status || 500)
         .json({ status: "FAILED", data: { authenticated: false, error: error?.message || error } });
 };

@@ -1,11 +1,13 @@
 import { model, Schema, Document } from 'mongoose';
 import { Color } from '../enums/index.ts';
 
-interface ITest extends Document {
+interface ITestParams {
     nombreCompleto: string;
     color: Color;
     estado: boolean;
-    // Este es el tipo correcto para el método getTest
+}
+
+interface ITest extends Document, ITestParams {
     getColorName(): string;
 }
 
@@ -41,4 +43,4 @@ TestSchema.methods.getColorName = function () {
 
 const TestModel = model<ITest>('Test', TestSchema);
 
-export { ITest, TestDocument, TestModel };
+export { ITestParams, ITest, TestDocument, TestModel };

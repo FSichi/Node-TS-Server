@@ -10,7 +10,7 @@ class TestController {
         this.testService = new TestService();
     }
 
-    testMethodGET = async (_req: Request, res: Response) => {
+    testMethodGET = async (_req: Request, res: Response): Promise<void> => {
         try {
             const responseData = await this.testService.getTestMethod();
             handleSuccessResponse(res, 200, responseData);
@@ -19,9 +19,9 @@ class TestController {
         }
     }
 
-    testMethodPOST = async (_req: Request, res: Response) => {
+    testMethodPOST = async (req: Request, res: Response): Promise<void> => {
 
-        const { nombreCompleto, color, estado } = _req.body;
+        const { nombreCompleto, color, estado } = req.body;
 
         const data = {
             nombreCompleto,

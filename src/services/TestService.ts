@@ -1,6 +1,6 @@
 import { handleProcessError } from "../messages/ErrorHandlers.ts";
 import TestRepository from "../repository/TestRepository.ts";
-import { TestModel } from "../database/models/Test.ts";
+import { TestDocument, TestModel, ITestParams } from "../database/models/Test.ts";
 
 class TestService {
 
@@ -10,7 +10,7 @@ class TestService {
         this.testRepository = new TestRepository();
     }
 
-    getTestMethod = async () => {
+    getTestMethod = async (): Promise<TestDocument[] | undefined> => {
         try {
             return this.testRepository.getAll();
         } catch (error) {
@@ -18,13 +18,14 @@ class TestService {
         }
     }
 
-    postTestMethod = async (data: { nombreCompleto: string, color: string, estado: boolean }) => {
+    postTestMethod = async (data: ITestParams): Promise<TestDocument | undefined> => {
         try {
 
             if (data.nombreCompleto.length < 6) {
                 throw { status: 407, message: `El nombre debe tener al menos 6 caracteres` }
             }
 
+            // const newTest:ITest = new TestModel({
             const newTest = new TestModel({
                 nombreCompleto: data.nombreCompleto,
                 color: data.color,
