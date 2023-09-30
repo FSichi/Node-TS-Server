@@ -1,10 +1,10 @@
-import express, { json, NextFunction, Request, Response } from 'express';
+import express, { json, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { dbConnection } from './database/config/config.ts';
 
-import { notFoundURL, handleJsonSyntaxError } from './middlewares/index.ts';
+import { dbConnection } from './database/config/config.ts';
 import { loadRouters } from './routes/index.ts';
+import { notFoundURL} from './middlewares/index.ts';
 
 dotenv.config();
 const app = express();
@@ -13,9 +13,9 @@ const app = express();
 dbConnection();
 
 // Middlewares
-app.use(json());
 app.use(cors());
-// app.use((error: any, res: Response, next: NextFunction) => handleJsonSyntaxError(res, next, error));
+// app.use(handleJsonSyntaxError);
+app.use(json());
 
 // Cargar los enrutadores
 loadRouters(app);
@@ -27,7 +27,6 @@ app.get('/', (_req: Request, res: Response) => {
 
 // Middleware para manejar URL no encontradas
 app.use(notFoundURL);
-// app.use((req, res, next) => notFoundURL({ req, res, next }));
 
 // Escuchar Peticiones
 app.listen(process.env.PORT, () => {
