@@ -4,7 +4,6 @@ import { handleErrorLogin, handleErrorResponse, handleSuccessResponse } from "..
 import AuthService from "../services/AuthService.ts";
 import { RequestWithUsuario } from "../interfaces/index.ts";
 
-
 class AuthController {
 
     private authService: AuthService;
@@ -30,8 +29,20 @@ class AuthController {
         const usuario = req.usuario;
 
         try {
-            const { token } = await this.authService.renewToken(usuario?._id);
+            const token = await this.authService.renewToken(usuario?._id);
             handleSuccessResponse(res, 200, { token: token });
+        } catch (error) {
+            handleErrorResponse(res, { status: (error as any).status || 500, message: (error as any).message || error });
+        }
+    }
+
+    public updateUserPassword = async (req: RequestWithUsuario, res: Response): Promise<void> => {
+
+        const { correo, password } = req.body;
+
+        try {
+            const { userUpdated, hashedPassword } = await this.authService.updateUserPassword(correo, password);
+            handleSuccessResponse(res, 200, { usuarioId: userUpdated._id, newPassword: hashedPassword });
         } catch (error) {
             handleErrorResponse(res, { status: (error as any).status || 500, message: (error as any).message || error });
         }

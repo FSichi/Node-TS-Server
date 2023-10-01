@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import UserService from "../services/UserService.ts";
 import { handleErrorResponse, handleSuccessResponse } from "../messages/HTTPResponse.ts";
 
-
 class UserController {
 
     private userService: UserService;

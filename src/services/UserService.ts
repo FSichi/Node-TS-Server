@@ -1,4 +1,5 @@
 import { IUsuarioParams, UsuarioDocument } from "../database/models/Usuario.ts";
+import { encryptPassword } from "../helpers/bcryptHelpers.ts";
 import { checkIfObjectExists, isValidMongoDBID } from "../helpers/helperFunctions.ts";
 import { handleProcessError } from "../messages/ErrorHandlers.ts";
 import UserRepository from "../repository/UserRepository.ts";
@@ -38,7 +39,11 @@ class UserService {
 
     public createUser = async (data: IUsuarioParams): Promise<UsuarioDocument | undefined> => {
         try {
-            const newUser = await this.userRepository.create(data);
+
+            let usuarioToDB = data;
+            usuarioToDB.password = encryptPassword(data.password);
+
+            const newUser = await this.userRepository.create(usuarioToDB);
             return newUser;
         } catch (error) {
             handleProcessError({ status: (error as any).status, error: (error as any).message || '' });

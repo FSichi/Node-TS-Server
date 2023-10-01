@@ -1,10 +1,7 @@
 import { Router } from 'express';
 import { check } from 'express-validator';
 
-import { UserRoles } from '../database/enums/index.ts';
-import { esAdminRole, validarCampos, validarJWT } from '../middlewares/index.js';
-import dbValidators from '../middlewares/db-validators.ts';
-
+import { validarCampos, validarJWT } from '../middlewares/index.js';
 import AuthController from "../controllers/AuthController.ts";
 
 const router = Router();

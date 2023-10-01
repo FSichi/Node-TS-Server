@@ -3,13 +3,14 @@ import { check } from 'express-validator';
 
 import TestController from "../controllers/TestController.ts";
 import { Color } from '../database/enums/index.ts';
-import { validarCampos, validarJWT } from '../middlewares/index.js';
+import { esAdminRole, validarCampos, validarJWT } from '../middlewares/index.js';
 
 const router = Router();
 const controller = new TestController();
 
 router.get("/", [
-    // validarJWT,
+    validarJWT,
+    esAdminRole
 ], controller.testMethodGET);
 
 router.post('/', [

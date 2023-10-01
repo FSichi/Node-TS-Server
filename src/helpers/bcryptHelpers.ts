@@ -6,11 +6,6 @@ interface IComparePassword {
     newPassword: string;
 }
 
-interface IValidPassword {
-    passwordProvided: string;
-    passwordHashed: string;
-}
-
 export const comparePassword = async ({ currentPassword, newPassword }: IComparePassword): Promise<boolean> => {
     const passwordMatch = await compare(newPassword, currentPassword);
     return passwordMatch;
@@ -21,7 +16,7 @@ export const encryptPassword = (password: string): string => {
     return hashSync(password, salt);
 };
 
-export const checkValidPassword = ({ passwordProvided, passwordHashed }: IValidPassword): boolean => {
+export const checkValidPassword = (passwordProvided: string, passwordHashed: string): boolean => {
     const validPassword = compareSync(passwordProvided, passwordHashed);
     return validPassword;
 }
