@@ -1,0 +1,35 @@
+services:
+    app:
+        build: .
+        ports:
+            - '4000:4000'
+        environment:
+            NODE_ENV: production
+            PORT: 4000
+            LOG_LEVEL: info
+            SECRETORPRIVATEKEY: ${SECRETORPRIVATEKEY:-dev-secret-change-me}
+            DATABASE_URL: mongodb://admin:admin@mongo:27017/app?authSource=admin
+            CORS_ORIGINS: '*'
+            BODY_LIMIT: 100kb
+        depends_on:
+            mongo:
+                condition: service_healthy
+
+    mongo:
+        image: mongo:7
+        ports:
+            - '27017:27017'
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: admin
+            MONGO_INITDB_ROOT_PASSWORD: admin
+            MONGO_INITDB_DATABASE: app
+        volumes:
+            - mongo-data:/data/db
+        healthcheck:
+            test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+volumes:
+    mongo-data:

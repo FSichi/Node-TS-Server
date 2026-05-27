@@ -1,52 +1,38 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
-import rateLimit from 'express-rate-limit';
-import { pinoHttp } from 'pino-http';
-import swaggerUi from 'swagger-ui-express';
-
+import mongoose from 'mongoose';
 import { config } from './config/env.js';
 import { logger } from './logger/index.js';
 import { dbConnection } from './database/config/config.js';
-import { loadRouters } from './routes/index.js';
-import { errorHandler, notFoundHandler } from './middlewares/index.js';
-import { generateOpenApiDocument } from './openapi/document.js';
+import { createApp } from './app.js';
 
-const app = express();
+const main = async () => {
+    await dbConnection();
+    const app = createApp();
 
-await dbConnection();
+    const server = app.listen(config.PORT, () => {
+        logger.info(`Server running on port ${config.PORT}`);
+        logger.info(`Swagger docs at http://localhost:${config.PORT}/docs`);
+    });
 
-app.use(helmet());
-app.use(cors());
-app.use(compression());
-app.use(
-    rateLimit({
-        windowMs: 15 * 60 * 1000,
-        max: 100,
-        standardHeaders: true,
-        legacyHeaders: false,
-    }),
-);
-app.use(express.json());
-app.use(pinoHttp({ logger }));
+    const shutdown = async (signal: string) => {
+        logger.info({ signal }, 'Shutdown signal received');
+        await new Promise<void>(resolve => {
+            server.close(err => {
+                if (err) logger.error({ err }, 'Error closing HTTP server');
+                else logger.info('HTTP server closed');
+                resolve();
+            });
+        });
+        await mongoose.disconnect();
+        logger.info('MongoDB disconnected');
+        process.exit(0);
+    };
 
-app.get('/health', (_req, res) => {
-    res.json({ status: 'OK' });
-});
+    process.on('SIGTERM', () => {
+        void shutdown('SIGTERM');
+    });
+    process.on('SIGINT', () => {
+        void shutdown('SIGINT');
+    });
+};
 
-loadRouters(app);
-
-const openApiDoc = generateOpenApiDocument();
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
-app.get('/openapi.json', (_req, res) => {
-    res.json(openApiDoc);
-});
-
-app.use(notFoundHandler);
-app.use(errorHandler);
-
-app.listen(config.PORT, () => {
-    logger.info(`Server running on port ${config.PORT}`);
-    logger.info(`Swagger docs available at http://localhost:${config.PORT}/docs`);
-});
+await main();

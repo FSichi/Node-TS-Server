@@ -10,10 +10,12 @@ const envSchema = z.object({
         .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
         .default('info'),
     SECRETORPRIVATEKEY: z.string().min(1),
-    DB_USER: z.string().min(1),
-    DB_PASSWORD: z.string().min(1),
-    DB_NAME: z.string().min(1),
-    DB_CLUSTER: z.string().min(1),
+    DATABASE_URL: z.string().min(1),
+    CORS_ORIGINS: z
+        .string()
+        .default('*')
+        .transform(v => (v === '*' ? '*' : v.split(',').map(s => s.trim()))),
+    BODY_LIMIT: z.string().default('100kb'),
 });
 
 const parsed = envSchema.safeParse(process.env);
