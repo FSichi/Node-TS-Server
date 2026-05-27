@@ -1,28 +1,10 @@
 import { Express } from 'express';
+import userRoutes from './UserRoutes.js';
+import authRoutes from './AuthRoutes.js';
+import testRoutes from './TestRoutes.js';
 
-// Importar los enrutadores
-import authRouter from './AuthRoutes.ts';
-import testRouter from './TestRoutes.ts';
-import userRouter from './UserRoutes.ts';
+const allRoutes = [authRoutes, userRoutes, testRoutes];
 
-// Enrutadores
-const routerPaths = {
-    AUTH: authRouter,
-    USER: userRouter,
-    TEST: testRouter,
-}
-
-// Direcciones de la API
-const routesPaths = {
-    AUTH: '/api/auth',
-    USER: '/api/users',
-    TEST: '/api/test',
-}
-
-export const loadRouters = (app: Express) => {
-    app.use(routesPaths.AUTH, routerPaths.AUTH);
-    app.use(routesPaths.USER, routerPaths.USER);
-    app.use(routesPaths.TEST, routerPaths.TEST);
+export const loadRouters = (app: Express): void => {
+    allRoutes.forEach(({ prefix, router }) => app.use(prefix, router));
 };
-
-export default loadRouters;

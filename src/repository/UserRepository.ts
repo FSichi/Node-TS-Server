@@ -1,23 +1,16 @@
-import { UsuarioDocument, UsuarioModel } from "../database/models/Usuario.ts";
-import { handleDatabaseError } from "../messages/ErrorHandlers.ts";
-import GenericRepository from "./GenericRepository.ts";
+import { UsuarioDocument, UsuarioModel } from '../database/models/Usuario.js';
+import GenericRepository from './GenericRepository.js';
 
-class UserRepository extends GenericRepository<UsuarioDocument>{
-
+class UserRepository extends GenericRepository<UsuarioDocument> {
     constructor() {
         super(UsuarioModel);
     }
 
-    async getUserPassword(correo: string) {
-        try {
-            const user = await UsuarioModel.findOne({ correo: correo }).select('_id password');
-            return user;
-        } catch (error) {
-            handleDatabaseError({ status: (error as any).status || 500, error: (error as any).message || error });
-        }
-    }
+    findByEmail = (correo: string): Promise<UsuarioDocument | null> =>
+        UsuarioModel.findOne({ correo }).exec();
 
-
+    getPasswordByEmail = (correo: string): Promise<UsuarioDocument | null> =>
+        UsuarioModel.findOne({ correo }).select('_id password').exec();
 }
 
 export default UserRepository;

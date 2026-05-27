@@ -1,34 +1,15 @@
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
+import { config } from '../../config/env.js';
+import { logger } from '../../logger/index.js';
 
-const { connect, connection } = mongoose;
-dotenv.config()
+const connectionString = `mongodb+srv://${config.DB_USER}:${config.DB_PASSWORD}@${config.DB_CLUSTER}/${config.DB_NAME}?retryWrites=true&w=majority`;
 
-const dbUser = process.env.DB_USER;
-const dbPassword = process.env.DB_PASSWORD;
-const dbName = process.env.DB_NAME;
-const dbCluster = process.env.DB_CLUSTER;
-
-// Construir la cadena de conexión
-const connectionString = `mongodb+srv://${dbUser}:${dbPassword}@${dbCluster}/${dbName}?retryWrites=true&w=majority`;
-
-export const dbConnection = () => {
-
-    return new Promise((resolve, reject) => {
-
-        connect(connectionString);
-
-        connection.on('connected', () => {
-            console.log('DB Mongoose Conectada con Éxito');
-            resolve(void 0);
-        });
-
-        connection.on('error', (error) => {
-            console.error(error);
-            reject(new Error('Error al inicializar la base de datos'));
-        });
-
-    });
+export const dbConnection = async (): Promise<void> => {
+    try {
+        await mongoose.connect(connectionString);
+        logger.info('MongoDB connected');
+    } catch (err) {
+        logger.error({ err }, 'MongoDB connection error');
+        throw new Error('Failed to initialize database connection');
+    }
 };
-
-export default dbConnection;

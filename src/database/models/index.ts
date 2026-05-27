@@ -1,2 +1,2 @@
-export { TestModel } from './Test.ts'
-export { UsuarioModel } from './Usuario.ts'
+export { TestModel } from './Test.js'
+export { UsuarioModel } from './Usuario.js'

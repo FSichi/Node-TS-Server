@@ -1,42 +1,22 @@
-import { Request, Response } from "express";
-import TestService from "../services/TestService.ts";
-import { handleErrorResponse, handleSuccessResponse } from "../messages/HTTPResponse.ts";
+import { Request, Response } from 'express';
+import TestService from '../services/TestService.js';
+import { CreateTestInput } from '../schemas/test.schema.js';
 
 class TestController {
+    private testService = new TestService();
 
-    private testService: TestService;
+    getAll = async (_req: Request, res: Response): Promise<void> => {
+        const data = await this.testService.getAll();
+        res.json({ status: 'OK', data });
+    };
 
-    constructor() {
-        this.testService = new TestService();
-    }
-
-    public testMethodGET = async (_req: Request, res: Response): Promise<void> => {
-        try {
-            const responseData = await this.testService.getTestMethod();
-            handleSuccessResponse(res, 200, responseData);
-        } catch (error) {
-            handleErrorResponse(res, error);
-        }
-    }
-
-    public testMethodPOST = async (req: Request, res: Response): Promise<void> => {
-
-        const { nombreCompleto, color, estado } = req.body;
-
-        const data = {
-            nombreCompleto,
-            color,
-            estado
-        }
-
-        try {
-            const responseData = await this.testService.postTestMethod(data);
-            handleSuccessResponse(res, 200, responseData);
-        } catch (error) {
-            handleErrorResponse(res, error);
-        }
-    }
-
+    create = async (
+        req: Request<unknown, unknown, CreateTestInput>,
+        res: Response,
+    ): Promise<void> => {
+        const test = await this.testService.create(req.body);
+        res.status(201).json({ status: 'OK', data: test });
+    };
 }
 
 export default TestController;

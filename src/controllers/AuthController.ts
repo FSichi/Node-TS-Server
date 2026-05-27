@@ -1,54 +1,40 @@
-import { Request, Response } from "express";
-
-import { handleErrorLogin, handleErrorResponse, handleSuccessResponse } from "../messages/HTTPResponse.js";
-import AuthService from "../services/AuthService.ts";
-import { RequestWithUsuario } from "../interfaces/index.ts";
+import { Request, Response } from 'express';
+import AuthService from '../services/AuthService.js';
+import { AppError } from '../errors/AppError.js';
+import { LoginInput, ChangePasswordInput } from '../schemas/auth.schema.js';
 
 class AuthController {
+    private authService = new AuthService();
 
-    private authService: AuthService;
-
-    constructor() {
-        this.authService = new AuthService();
-    }
-
-    public login = async (req: Request, res: Response): Promise<void> => {
-
+    login = async (
+        req: Request<unknown, unknown, LoginInput>,
+        res: Response,
+    ): Promise<void> => {
         const { correo, password } = req.body;
+        const { token, usuario } = await this.authService.login(correo, password);
+        res.json({
+            status: 'OK',
+            data: { authenticated: true, user: usuario, token },
+        });
+    };
 
-        try {
-            const { token, usuario } = await this.authService.checkStatusForLogin(correo, password);
-            handleSuccessResponse(res, 200, { authenticated: true, user: usuario, token: token });
-        } catch (error) {
-            handleErrorLogin(res, error);
-        }
-    }
+    renewToken = async (req: Request, res: Response): Promise<void> => {
+        if (!req.usuario) throw new AppError(401, 'No autenticado');
+        const token = this.authService.renewToken(req.usuario.id);
+        res.json({ status: 'OK', data: { token } });
+    };
 
-    public renewToken = async (req: RequestWithUsuario, res: Response): Promise<void> => {
-
-        const usuario = req.usuario;
-
-        try {
-            const token = await this.authService.renewToken(usuario?._id);
-            handleSuccessResponse(res, 200, { token: token });
-        } catch (error) {
-            handleErrorResponse(res, { status: (error as any).status || 500, message: (error as any).message || error });
-        }
-    }
-
-    public updateUserPassword = async (req: RequestWithUsuario, res: Response): Promise<void> => {
-
+    updateUserPassword = async (
+        req: Request<unknown, unknown, ChangePasswordInput>,
+        res: Response,
+    ): Promise<void> => {
         const { correo, password } = req.body;
-
-        try {
-            const { userUpdated, hashedPassword } = await this.authService.updateUserPassword(correo, password);
-            handleSuccessResponse(res, 200, { usuarioId: userUpdated._id, newPassword: hashedPassword });
-        } catch (error) {
-            handleErrorResponse(res, { status: (error as any).status || 500, message: (error as any).message || error });
-        }
-    }
-
-
+        const result = await this.authService.updateUserPassword(correo, password);
+        res.json({
+            status: 'OK',
+            data: { usuarioId: result.usuarioId, newPassword: result.hashedPassword },
+        });
+    };
 }
 
 export default AuthController;

@@ -1,4 +1,2 @@
-
-export * from './bcryptHelpers.ts';
-export * from './generar-jwt.ts';
-export * from './helperFunctions.ts';
+export * from './passwordHelpers.js';
+export * from './generar-jwt.js';

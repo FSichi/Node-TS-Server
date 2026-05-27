@@ -1,75 +1,47 @@
-import { Request, Response } from "express";
-import UserService from "../services/UserService.ts";
-import { handleErrorResponse, handleSuccessResponse } from "../messages/HTTPResponse.ts";
+import { Request, Response } from 'express';
+import UserService from '../services/UserService.js';
+import {
+    CreateUserInput,
+    UpdateUserInput,
+    ChangeStatusInput,
+} from '../schemas/user.schema.js';
 
 class UserController {
+    private userService = new UserService();
 
-    private userService: UserService;
+    getAllUsers = async (_req: Request, res: Response): Promise<void> => {
+        const users = await this.userService.getAllUsers();
+        res.json({ status: 'OK', data: users });
+    };
 
-    constructor() {
-        this.userService = new UserService();
-    }
+    getUserById = async (req: Request, res: Response): Promise<void> => {
+        const user = await this.userService.getUserById(String(req.params.userId));
+        res.json({ status: 'OK', data: user });
+    };
 
-    public getAllUsers = async (_req: Request, res: Response): Promise<void> => {
-        try {
-            const listOfUsers = await this.userService.getAllUsers();
-            handleSuccessResponse(res, 200, listOfUsers);
-        } catch (error) {
-            handleErrorResponse(res, error);
-        }
-    }
+    createUser = async (
+        req: Request<unknown, unknown, CreateUserInput>,
+        res: Response,
+    ): Promise<void> => {
+        const user = await this.userService.createUser({ ...req.body, estado: true });
+        res.status(201).json({ status: 'OK', data: { usuario: user } });
+    };
 
-    public getUserById = async (req: Request, res: Response): Promise<void> => {
+    updateUser = async (
+        req: Request<unknown, unknown, UpdateUserInput>,
+        res: Response,
+    ): Promise<void> => {
+        const user = await this.userService.updateUser(req.body);
+        res.json({ status: 'OK', data: { usuario: user } });
+    };
 
-        const { userId } = req.params;
-
-        try {
-            const user = await this.userService.getUserById(userId);
-            handleSuccessResponse(res, 200, user);
-        } catch (error) {
-            handleErrorResponse(res, error);
-        }
-    }
-
-    public createUser = async (req: Request, res: Response): Promise<void> => {
-
-        const { nombre, password, correo, rol } = req.body;
-        const userToDB = { nombre, password, correo, rol, estado: true }
-
-        try {
-            const user = await this.userService.createUser(userToDB);
-            handleSuccessResponse(res, 200, { usuario: user });
-        } catch (error) {
-            handleErrorResponse(res, error);
-        }
-    }
-
-    public updateUser = async (req: Request, res: Response): Promise<void> => {
-
-        const { _id, nombre } = req.body;
-        const dataToUpdate = { _id, nombre }
-
-        try {
-            const user = await this.userService.updateUser(dataToUpdate);
-            handleSuccessResponse(res, 200, { usuario: user });
-        } catch (error) {
-            handleErrorResponse(res, error);
-        }
-    }
-
-    public changeUserStatus = async (req: Request, res: Response): Promise<void> => {
-
-        const { _id, estado } = req.body;
-        const data = { _id, estado }
-
-        try {
-            const user = await this.userService.changeUserStatus(data);
-            handleSuccessResponse(res, 200, { usuario: user });
-        } catch (error) {
-            handleErrorResponse(res, error);
-        }
-    }
-
+    changeUserStatus = async (
+        req: Request<unknown, unknown, ChangeStatusInput>,
+        res: Response,
+    ): Promise<void> => {
+        const user = await this.userService.changeUserStatus(req.body);
+        res.json({ status: 'OK', data: { usuario: user } });
+    };
 }
 
 export default UserController;

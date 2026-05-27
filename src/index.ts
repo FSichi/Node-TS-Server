@@ -1,34 +1,52 @@
-import express, { json, Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+import { pinoHttp } from 'pino-http';
+import swaggerUi from 'swagger-ui-express';
 
-import { dbConnection } from './database/config/config.ts';
-import { loadRouters } from './routes/index.ts';
-import { notFoundURL} from './middlewares/index.ts';
+import { config } from './config/env.js';
+import { logger } from './logger/index.js';
+import { dbConnection } from './database/config/config.js';
+import { loadRouters } from './routes/index.js';
+import { errorHandler, notFoundHandler } from './middlewares/index.js';
+import { generateOpenApiDocument } from './openapi/document.js';
 
-dotenv.config();
 const app = express();
 
-// CONEXION A DB
-dbConnection();
+await dbConnection();
 
-// Middlewares
+app.use(helmet());
 app.use(cors());
-// app.use(handleJsonSyntaxError);
-app.use(json());
+app.use(compression());
+app.use(
+    rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
+    }),
+);
+app.use(express.json());
+app.use(pinoHttp({ logger }));
 
-// Cargar los enrutadores
+app.get('/health', (_req, res) => {
+    res.json({ status: 'OK' });
+});
+
 loadRouters(app);
 
-// Direccion por Defecto
-app.get('/', (_req: Request, res: Response) => {
-    res.send('Ingenieria de Software - Backend - Default Route');
-})
+const openApiDoc = generateOpenApiDocument();
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiDoc));
+app.get('/openapi.json', (_req, res) => {
+    res.json(openApiDoc);
+});
 
-// Middleware para manejar URL no encontradas
-app.use(notFoundURL);
+app.use(notFoundHandler);
+app.use(errorHandler);
 
-// Escuchar Peticiones
-app.listen(process.env.PORT, () => {
-    console.log(`Servidor corriendo en puerto ${process.env.PORT}`);
+app.listen(config.PORT, () => {
+    logger.info(`Server running on port ${config.PORT}`);
+    logger.info(`Swagger docs available at http://localhost:${config.PORT}/docs`);
 });

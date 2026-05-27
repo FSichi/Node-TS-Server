@@ -1,87 +1,42 @@
-import { IUsuarioParams, UsuarioDocument } from "../database/models/Usuario.ts";
-import { encryptPassword } from "../helpers/bcryptHelpers.ts";
-import { checkIfObjectExists, isValidMongoDBID } from "../helpers/helperFunctions.ts";
-import { handleProcessError } from "../messages/ErrorHandlers.ts";
-import UserRepository from "../repository/UserRepository.ts";
-
+import { IUsuarioParams, UsuarioDocument } from '../database/models/Usuario.js';
+import { hashPassword } from '../helpers/passwordHelpers.js';
+import { AppError } from '../errors/AppError.js';
+import UserRepository from '../repository/UserRepository.js';
 
 class UserService {
+    private userRepository = new UserRepository();
 
-    private userRepository: UserRepository;
+    getAllUsers = (): Promise<UsuarioDocument[]> => this.userRepository.getAll();
 
-    constructor() {
-        this.userRepository = new UserRepository();
-    }
+    getUserById = async (userId: string): Promise<UsuarioDocument> => {
+        const user = await this.userRepository.getById(userId);
+        if (!user) throw new AppError(404, `No existe usuario con id: ${userId}`);
+        return user;
+    };
 
-    public getAllUsers = async (): Promise<UsuarioDocument[] | undefined> => {
-        try {
-            const listOfUsers = await this.userRepository.getAll();
-            return listOfUsers;
-        } catch (error) {
-            handleProcessError({ status: (error as any).status, error: (error as any).message || '' });
-        }
-    }
+    createUser = async (data: IUsuarioParams): Promise<UsuarioDocument> => {
+        const existing = await this.userRepository.findByEmail(data.correo);
+        if (existing) throw new AppError(409, `El correo ${data.correo} ya está registrado`);
 
-    public getUserById = async (userId: string): Promise<UsuarioDocument | undefined | null> => {
-        try {
+        return this.userRepository.create({
+            ...data,
+            password: await hashPassword(data.password),
+        });
+    };
 
-            isValidMongoDBID(userId);
+    updateUser = async (data: { _id: string; nombre: string }): Promise<UsuarioDocument> => {
+        await this.getUserById(data._id);
+        const updated = await this.userRepository.update(data._id, { nombre: data.nombre });
+        if (!updated) throw new AppError(404, `No existe usuario con id: ${data._id}`);
+        return updated;
+    };
 
-            const user = await this.userRepository.getById(userId);
-            checkIfObjectExists({ objectId: userId, object: user, type: false, objectType: 'Usuario' });
-
-            return user;
-
-        } catch (error) {
-            handleProcessError({ status: (error as any).status, error: (error as any).message || '' });
-        }
-    }
-
-    public createUser = async (data: IUsuarioParams): Promise<UsuarioDocument | undefined> => {
-        try {
-
-            let usuarioToDB = data;
-            usuarioToDB.password = encryptPassword(data.password);
-
-            const newUser = await this.userRepository.create(usuarioToDB);
-            return newUser;
-        } catch (error) {
-            handleProcessError({ status: (error as any).status, error: (error as any).message || '' });
-        }
-    }
-
-    public updateUser = async (data: { _id: string, nombre: string }): Promise<UsuarioDocument | undefined | null> => {
-
-        const { _id, nombre } = data
-
-        try {
-
-            await this.getUserById(_id);
-
-            const user = await this.userRepository.update(_id, { nombre: nombre });
-            return user;
-
-        } catch (error) {
-            handleProcessError({ status: (error as any).status, error: (error as any).message || '' });
-        }
-    }
-
-    public changeUserStatus = async (data: { _id: string, estado: boolean }): Promise<UsuarioDocument | undefined | null> => {
-
-        const { _id, estado } = data
-
-        try {
-
-            await this.getUserById(_id);
-
-            const user = await this.userRepository.update(_id, { estado: estado });
-            return user;
-
-        } catch (error) {
-            handleProcessError({ status: (error as any).status, error: (error as any).message || '' });
-        }
-    }
-
+    changeUserStatus = async (data: { _id: string; estado: boolean }): Promise<UsuarioDocument> => {
+        await this.getUserById(data._id);
+        const updated = await this.userRepository.update(data._id, { estado: data.estado });
+        if (!updated) throw new AppError(404, `No existe usuario con id: ${data._id}`);
+        return updated;
+    };
 }
 
 export default UserService;

@@ -1,65 +1,46 @@
-import UserRepository from "../repository/UserRepository.ts";
-import { handleProcessError } from "../messages/ErrorHandlers.ts";
-import { checkIfObjectExists, checkUserStatusForLogin, comparePassword, encryptPassword, generarJWT } from "../helpers/index.ts";
+import { UsuarioDocument } from '../database/models/Usuario.js';
+import { hashPassword, verifyPassword } from '../helpers/passwordHelpers.js';
+import { generarJWT } from '../helpers/generar-jwt.js';
+import { AppError } from '../errors/AppError.js';
+import UserRepository from '../repository/UserRepository.js';
 
 class AuthService {
+    private userRepository = new UserRepository();
 
-    private userRepository: UserRepository;
+    login = async (
+        correo: string,
+        password: string,
+    ): Promise<{ usuario: UsuarioDocument; token: string }> => {
+        const usuario = await this.userRepository.findByEmail(correo);
+        if (!usuario) throw new AppError(401, 'Usuario / password no son correctos');
+        if (!usuario.estado) throw new AppError(401, 'Estado del usuario: bloqueado');
 
-    constructor() {
-        this.userRepository = new UserRepository();
-    }
+        const valid = await verifyPassword(usuario.password, password);
+        if (!valid) throw new AppError(401, 'Usuario / password no son correctos');
 
-    public checkStatusForLogin = async (correo: string, password: string): Promise<any> => {
-        try {
-            const usuario = await this.userRepository.getOne({ correo: correo });
+        const token = generarJWT(usuario.id);
+        return { usuario, token };
+    };
 
-            const { userStatus, error } = checkUserStatusForLogin(usuario!, password);
+    renewToken = (usuarioId: string): string => generarJWT(usuarioId);
 
-            console.log(userStatus);
+    updateUserPassword = async (
+        correo: string,
+        password: string,
+    ): Promise<{ usuarioId: string; hashedPassword: string }> => {
+        const user = await this.userRepository.getPasswordByEmail(correo);
+        if (!user) throw new AppError(404, 'Usuario no encontrado');
 
-            if (!userStatus) {
-                return handleProcessError({ status: error.status, error: error.message || '' });
-            }
-
-            const token = generarJWT(usuario!.id);
-            return { usuario, token };
-
-        } catch (error) {
-            handleProcessError({ status: (error as any).status, error: (error as any).message || '' });
+        const samePassword = await verifyPassword(user.password, password);
+        if (samePassword) {
+            throw new AppError(409, 'No puedes cambiar la contraseña actual por la misma');
         }
-    }
 
-    public renewToken = async (usuarioId: string): Promise<string | undefined> => {
-        try {
-            const token = generarJWT(usuarioId);
-            return token;
-        } catch (error) {
-            handleProcessError({ status: (error as any).status, error: (error as any).message || '' });
-        }
-    }
+        const hashedPassword = await hashPassword(password);
+        await this.userRepository.update(user.id, { password: hashedPassword });
 
-    public updateUserPassword = async (correo: string, password: string): Promise<any> => {
-        try {
-            const user = await this.userRepository.getUserPassword(correo);
-
-            checkIfObjectExists({ object: user, type: false, objectType: 'Usuario' });
-
-            const samePassword = await comparePassword({ currentPassword: user!.password, newPassword: password });
-            if (samePassword) {
-                handleProcessError({ status: 401, error: 'No puedes cambiar la contraseña actual por la misma' });
-            }
-
-            const hashedPassword = encryptPassword(password);
-            const userUpdated = await this.userRepository.update(user!._id, { password: hashedPassword });
-
-            return { userUpdated, hashedPassword };
-
-        } catch (error) {
-            handleProcessError({ status: (error as any).status, error: (error as any).message || '' });
-        }
-    }
-
+        return { usuarioId: user.id, hashedPassword };
+    };
 }
 
 export default AuthService;

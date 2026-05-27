@@ -1,25 +1,32 @@
 import { Router } from 'express';
-import { check } from 'express-validator';
-
-import TestController from "../controllers/TestController.ts";
-import { Color } from '../database/enums/index.ts';
-import { esAdminRole, validarCampos, validarJWT } from '../middlewares/index.js';
+import TestController from '../controllers/TestController.js';
+import { requireAuth, requireAdmin, validate } from '../middlewares/index.js';
+import { defineRoute } from '../openapi/defineRoute.js';
+import { createTestSchema } from '../schemas/test.schema.js';
 
 const router = Router();
+const prefix = '/api/test';
 const controller = new TestController();
+const tags = ['Test'];
 
-router.get("/", [
-    validarJWT,
-    esAdminRole
-], controller.testMethodGET);
+defineRoute(router, prefix, {
+    method: 'get',
+    path: '/',
+    summary: 'List test items',
+    tags,
+    requireAuth: true,
+    middlewares: [requireAuth, requireAdmin],
+    handler: controller.getAll,
+});
 
-router.post('/', [
-    check('nombreCompleto', 'El nombre es obligatorio y debe ser un String').isString().notEmpty(),
-    check('color', 'El Color es obligatorio y pertenecer a [Azul - Verde - Rojo]').not().isEmpty().isIn([
-        Color.Blue, Color.Green, Color.Red
-    ]),
-    check('estado', 'El campo estado es obligatorio y debe ser un valor Booleano').not().isEmpty().isBoolean(),
-    validarCampos
-], controller.testMethodPOST);
+defineRoute(router, prefix, {
+    method: 'post',
+    path: '/',
+    summary: 'Create test item',
+    tags,
+    body: createTestSchema,
+    middlewares: [validate({ body: createTestSchema })],
+    handler: controller.create,
+});
 
-export default router;
+export default { router, prefix };

@@ -18,12 +18,12 @@ type UsuarioDocument = Document & IUsuario;
 const UsuarioSchema = new Schema({
     nombre: {
         type: String,
-        required: [true, 'El nombre es obligatorio']
+        required: [true, 'El nombre es obligatorio'],
     },
     correo: {
         type: String,
         required: [true, 'El correo es obligatorio'],
-        unique: true
+        unique: true,
     },
     password: {
         type: String,
@@ -33,24 +33,26 @@ const UsuarioSchema = new Schema({
         type: String,
         default: UserRoles.USER,
         enum: [UserRoles.ADMIN, UserRoles.USER],
-        required: [true, 'El Rol es obligatorio']
+        required: [true, 'El Rol es obligatorio'],
     },
     estado: {
         type: Boolean,
-        default: true
-    }
+        default: true,
+    },
 });
 
 UsuarioSchema.methods.toJSON = function () {
-    const { __v, password, _id, ...usuario } = this.toObject();
-    usuario.uid = _id;
-    return usuario;
-}
+    const obj = this.toObject();
+    delete obj.__v;
+    delete obj.password;
+    obj.uid = obj._id;
+    delete obj._id;
+    return obj;
+};
 
 UsuarioSchema.methods.getUserRol = function () {
-    const { rol } = this.toObject();
-    return rol;
-}
+    return this.toObject().rol;
+};
 
 const UsuarioModel = model<IUsuario>('Usuario', UsuarioSchema);
 

@@ -1,17 +1,12 @@
-import GenericRepository from './GenericRepository.ts';
-import { TestModel } from '../database/models/Test.ts';
-import { TestDocument } from '../database/models/Test.ts';
+import { TestDocument, TestModel } from '../database/models/Test.js';
+import GenericRepository from './GenericRepository.js';
 
 class TestRepository extends GenericRepository<TestDocument> {
-
     constructor() {
         super(TestModel);
     }
 
-    async getAllTestsByColor(color: string): Promise<TestDocument[] | undefined> {
-        return await this.getAll({ color: color });
-    }
-
+    getAllByColor = (color: string): Promise<TestDocument[]> => this.getAll({ color });
 }
 
 export default TestRepository;

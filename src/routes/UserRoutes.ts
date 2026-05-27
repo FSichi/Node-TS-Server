@@ -1,54 +1,76 @@
 import { Router } from 'express';
-import { check } from 'express-validator';
-
-import { UserRoles } from '../database/enums/index.ts';
-import { esAdminRole, validarCampos, validarJWT } from '../middlewares/index.js';
-import dbValidators from '../middlewares/db-validators.ts';
-
-import UserController from "../controllers/UserController.ts";
+import UserController from '../controllers/UserController.js';
+import { requireAuth, requireAdmin, validate } from '../middlewares/index.js';
+import { defineRoute } from '../openapi/defineRoute.js';
+import {
+    createUserSchema,
+    updateUserSchema,
+    changeStatusSchema,
+    userIdParamsSchema,
+    userResponseSchema,
+} from '../schemas/user.schema.js';
 
 const router = Router();
+const prefix = '/api/users';
 const controller = new UserController();
+const tags = ['Users'];
 
-/* Me retorna todos los Usuarios  -> QueryParam: ?ficha = [ 'true' - 'false' ]*/
-router.get("/", [
-    validarJWT,
-    esAdminRole,
-], controller.getAllUsers);
+defineRoute(router, prefix, {
+    method: 'get',
+    path: '/',
+    summary: 'List all users',
+    tags,
+    requireAuth: true,
+    response: userResponseSchema.array(),
+    middlewares: [requireAuth, requireAdmin],
+    handler: controller.getAllUsers,
+});
 
-/* Me retorna un Usuario Especifico -> QueryParam: ?ficha = [ 'true' - 'false' ]*/
-router.get("/:userId", [
-    validarJWT,
-    esAdminRole,
-], controller.getUserById);
+defineRoute(router, prefix, {
+    method: 'get',
+    path: '/:userId',
+    summary: 'Get user by ID',
+    tags,
+    requireAuth: true,
+    params: userIdParamsSchema,
+    response: userResponseSchema,
+    middlewares: [requireAuth, requireAdmin, validate({ params: userIdParamsSchema })],
+    handler: controller.getUserById,
+});
 
-/* Crear un Nuevo Usuario */
-router.post('/', [
-    // validarJWT,
-    check('nombre', 'El nombre es obligatorio y debe ser un String').isString().notEmpty(),
-    check('password', 'El Password debe contener entre 6 y 15 Caracteres').isLength({ min: 6, max: 15 }),
-    check('correo', 'El correo no es válido').isEmail(),
-    check('correo').custom(dbValidators.emailExiste),
-    check('rol', 'El Rol es obligatorio y ser [Admin - User]').not().isEmpty().isIn([UserRoles.ADMIN, UserRoles.USER]),
-    validarCampos
-], controller.createUser);
+defineRoute(router, prefix, {
+    method: 'post',
+    path: '/',
+    summary: 'Create a new user',
+    tags,
+    body: createUserSchema,
+    response: userResponseSchema,
+    middlewares: [validate({ body: createUserSchema })],
+    handler: controller.createUser,
+});
 
-/* Actualizar Usuario  */
-router.put('/', [
-    validarJWT,
-    esAdminRole,
-    check('_id', 'El id es obligatorio').not().isEmpty(),
-    check('nombre', 'El nombre es obligatorio').not().isEmpty(),
-    validarCampos
-], controller.updateUser);
+defineRoute(router, prefix, {
+    method: 'put',
+    path: '/',
+    summary: 'Update user name',
+    tags,
+    requireAuth: true,
+    body: updateUserSchema,
+    response: userResponseSchema,
+    middlewares: [requireAuth, requireAdmin, validate({ body: updateUserSchema })],
+    handler: controller.updateUser,
+});
 
-/* Modificar Estado Cuenta del Usuario*/
-router.put('/change-status', [
-    validarJWT,
-    esAdminRole,
-    check('_id', 'El id es obligatorio').not().isEmpty(),
-    check('estado', 'El campo estado es obligatorio y debe ser un valor Booleano').not().isEmpty().isBoolean(),
-    validarCampos
-], controller.changeUserStatus);
+defineRoute(router, prefix, {
+    method: 'put',
+    path: '/change-status',
+    summary: 'Change user enabled status',
+    tags,
+    requireAuth: true,
+    body: changeStatusSchema,
+    response: userResponseSchema,
+    middlewares: [requireAuth, requireAdmin, validate({ body: changeStatusSchema })],
+    handler: controller.changeUserStatus,
+});
 
-export default router;
+export default { router, prefix };

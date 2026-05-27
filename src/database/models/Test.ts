@@ -1,5 +1,5 @@
 import { model, Schema, Document } from 'mongoose';
-import { Color } from '../enums/index.ts';
+import { Color } from '../enums/index.js';
 
 interface ITestParams {
     nombreCompleto: string;
@@ -16,30 +16,32 @@ type TestDocument = Document & ITest;
 const TestSchema = new Schema({
     nombreCompleto: {
         type: String,
-        required: [true, 'El nombre es obligatorio']
+        required: [true, 'El nombre es obligatorio'],
     },
     color: {
         type: String,
         default: Color.Blue,
         enum: [Color.Red, Color.Blue, Color.Green],
-        required: [true, 'El Rol es obligatorio']
+        required: [true, 'El color es obligatorio'],
     },
     estado: {
         type: Boolean,
-        default: true
-    }
+        default: true,
+    },
 });
 
 TestSchema.methods.toJSON = function () {
-    const { __v, estado, _id, ...test } = this.toObject();
-    test.uid = _id;
-    return test;
-}
+    const obj = this.toObject();
+    delete obj.__v;
+    delete obj.estado;
+    obj.uid = obj._id;
+    delete obj._id;
+    return obj;
+};
 
 TestSchema.methods.getColorName = function () {
-    const { color } = this.toObject();
-    return color;
-}
+    return this.toObject().color;
+};
 
 const TestModel = model<ITest>('Test', TestSchema);
 

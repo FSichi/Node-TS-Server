@@ -1,72 +1,32 @@
-import { IAggregationPipeline } from "../interfaces/index.js";
-import { handleDatabaseError } from "../messages/ErrorHandlers.js";
-import { Document, Model, PipelineStage } from 'mongoose';
+import { Document, Model, PipelineStage, UpdateQuery } from 'mongoose';
+import { IAggregationPipeline } from '../interfaces/index.js';
 
-class GenericRepository<T extends Document>{
-
-    private readonly model: Model<T>;
+class GenericRepository<T extends Document> {
+    protected readonly model: Model<T>;
 
     constructor(model: Model<T>) {
         this.model = model;
     }
 
-    async getAll(query: Record<string, any> = {}, options: Record<string, any> = {}): Promise<T[] | undefined> {
-        try {
-            return await this.model.find(query, options);
-        } catch (error: any) {
-            handleDatabaseError({ status: 500, error: error });
-        }
-    }
+    getAll = (
+        query: Record<string, unknown> = {},
+        options: Record<string, unknown> = {},
+    ): Promise<T[]> => this.model.find(query, options).exec();
 
-    async getById(id: string): Promise<T | null | undefined> {
-        try {
-            return await this.model.findById(id);
-        } catch (error: any) {
-            handleDatabaseError({ status: 500, error: error });
-        }
-    }
+    getById = (id: string): Promise<T | null> => this.model.findById(id).exec();
 
-    async getOne(query: Record<string, any> = {}): Promise<T | null | undefined> {
-        try {
-            return await this.model.findOne(query);
-        } catch (error: any) {
-            handleDatabaseError({ status: 500, error: error });
-        }
-    }
+    getOne = (query: Record<string, unknown> = {}): Promise<T | null> =>
+        this.model.findOne(query).exec();
 
-    async aggregate(pipeline: IAggregationPipeline[]): Promise<any> {
-        try {
-            const pipelineStages: PipelineStage[] = pipeline as PipelineStage[];
-            return await this.model.aggregate(pipelineStages);
-        } catch (error: any) {
-            handleDatabaseError({ status: 500, error: error });
-        }
-    }
+    aggregate = (pipeline: IAggregationPipeline[]): Promise<unknown[]> =>
+        this.model.aggregate(pipeline as PipelineStage[]).exec();
 
-    async create(data: Record<string, any>): Promise<T | undefined> {
-        try {
-            return await this.model.create(data);
-        } catch (error: any) {
-            handleDatabaseError({ status: 500, error: error });
-        }
-    }
+    create = (data: object): Promise<T> => this.model.create(data) as unknown as Promise<T>;
 
-    async update(id: string, data: Record<string, any>): Promise<T | null | undefined> {
-        try {
-            return await this.model.findByIdAndUpdate(id, data, { new: true });
-        } catch (error: any) {
-            handleDatabaseError({ status: 500, error: error });
-        }
-    }
+    update = (id: string, data: UpdateQuery<T>): Promise<T | null> =>
+        this.model.findByIdAndUpdate(id, data, { new: true }).exec();
 
-    async delete(id: string): Promise<T | null | undefined> {
-        try {
-            return await this.model.findByIdAndDelete(id);
-        } catch (error: any) {
-            handleDatabaseError({ status: 500, error: error });
-        }
-    }
-
+    delete = (id: string): Promise<T | null> => this.model.findByIdAndDelete(id).exec();
 }
 
 export default GenericRepository;

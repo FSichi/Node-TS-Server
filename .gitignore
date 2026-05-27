@@ -7,6 +7,10 @@
 node_modules/
 dist/
 
+# Lockfiles from other package managers (pnpm-only project)
+package-lock.json
+yarn.lock
+
 # ENV REAL FILE
 .env
 
