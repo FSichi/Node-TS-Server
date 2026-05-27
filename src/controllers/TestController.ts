@@ -1,13 +1,14 @@
 import { Request, Response } from 'express';
 import TestService from '../services/TestService.js';
 import { CreateTestInput } from '../schemas/test.schema.js';
+import { paginated, created, getPagination } from '../helpers/index.js';
 
 class TestController {
     private testService = new TestService();
 
     getAll = async (_req: Request, res: Response): Promise<void> => {
-        const data = await this.testService.getAll();
-        res.json({ status: 'OK', data });
+        const { data, total } = await this.testService.getAll(getPagination(res));
+        paginated(res, data, total);
     };
 
     create = async (
@@ -15,7 +16,7 @@ class TestController {
         res: Response,
     ): Promise<void> => {
         const test = await this.testService.create(req.body);
-        res.status(201).json({ status: 'OK', data: test });
+        created(res, test);
     };
 }
 

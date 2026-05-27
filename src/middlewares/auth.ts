@@ -4,7 +4,11 @@ import { UsuarioModel } from '../database/models/Usuario.js';
 import { AppError } from '../errors/AppError.js';
 import { config } from '../config/env.js';
 
-export const requireAuth = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
+export const requireAuth = async (
+    req: Request,
+    _res: Response,
+    next: NextFunction,
+): Promise<void> => {
     const token = req.header('x-token');
     if (!token) throw new AppError(401, 'No hay token en la petición');
 

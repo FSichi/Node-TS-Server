@@ -1,22 +1,19 @@
 import { Request, Response } from 'express';
 import UserService from '../services/UserService.js';
-import {
-    CreateUserInput,
-    UpdateUserInput,
-    ChangeStatusInput,
-} from '../schemas/user.schema.js';
+import { CreateUserInput, UpdateUserInput, ChangeStatusInput } from '../schemas/user.schema.js';
+import { ok, paginated, created, getPagination } from '../helpers/index.js';
 
 class UserController {
     private userService = new UserService();
 
     getAllUsers = async (_req: Request, res: Response): Promise<void> => {
-        const users = await this.userService.getAllUsers();
-        res.json({ status: 'OK', data: users });
+        const { data, total } = await this.userService.getAllUsers(getPagination(res));
+        paginated(res, data, total);
     };
 
     getUserById = async (req: Request, res: Response): Promise<void> => {
         const user = await this.userService.getUserById(String(req.params.userId));
-        res.json({ status: 'OK', data: user });
+        ok(res, user);
     };
 
     createUser = async (
@@ -24,7 +21,7 @@ class UserController {
         res: Response,
     ): Promise<void> => {
         const user = await this.userService.createUser({ ...req.body, estado: true });
-        res.status(201).json({ status: 'OK', data: { usuario: user } });
+        created(res, user);
     };
 
     updateUser = async (
@@ -32,7 +29,7 @@ class UserController {
         res: Response,
     ): Promise<void> => {
         const user = await this.userService.updateUser(req.body);
-        res.json({ status: 'OK', data: { usuario: user } });
+        ok(res, user);
     };
 
     changeUserStatus = async (
@@ -40,7 +37,7 @@ class UserController {
         res: Response,
     ): Promise<void> => {
         const user = await this.userService.changeUserStatus(req.body);
-        res.json({ status: 'OK', data: { usuario: user } });
+        ok(res, user);
     };
 }
 

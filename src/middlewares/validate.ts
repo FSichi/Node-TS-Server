@@ -8,10 +8,10 @@ interface ValidateSchemas {
 }
 
 export const validate = (schemas: ValidateSchemas) => {
-    return (req: Request, _res: Response, next: NextFunction): void => {
+    return (req: Request, res: Response, next: NextFunction): void => {
         if (schemas.body) req.body = schemas.body.parse(req.body);
-        if (schemas.params) schemas.params.parse(req.params);
-        if (schemas.query) schemas.query.parse(req.query);
+        if (schemas.params) res.locals.validatedParams = schemas.params.parse(req.params);
+        if (schemas.query) res.locals.validatedQuery = schemas.query.parse(req.query);
         next();
     };
 };

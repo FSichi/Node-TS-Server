@@ -2,11 +2,14 @@ import { IUsuarioParams, UsuarioDocument } from '../database/models/Usuario.js';
 import { hashPassword } from '../helpers/passwordHelpers.js';
 import { AppError } from '../errors/AppError.js';
 import UserRepository from '../repository/UserRepository.js';
+import { PaginatedResult } from '../repository/GenericRepository.js';
+import { PaginationQuery } from '../schemas/pagination.schema.js';
 
 class UserService {
     private userRepository = new UserRepository();
 
-    getAllUsers = (): Promise<UsuarioDocument[]> => this.userRepository.getAll();
+    getAllUsers = (pagination: PaginationQuery): Promise<PaginatedResult<UsuarioDocument>> =>
+        this.userRepository.getPaginated({}, pagination);
 
     getUserById = async (userId: string): Promise<UsuarioDocument> => {
         const user = await this.userRepository.getById(userId);

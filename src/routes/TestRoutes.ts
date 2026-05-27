@@ -3,6 +3,7 @@ import TestController from '../controllers/TestController.js';
 import { requireAuth, requireAdmin, validate } from '../middlewares/index.js';
 import { defineRoute } from '../openapi/defineRoute.js';
 import { createTestSchema } from '../schemas/test.schema.js';
+import { paginationQuerySchema } from '../schemas/pagination.schema.js';
 
 const router = Router();
 const prefix = '/api/test';
@@ -12,10 +13,11 @@ const tags = ['Test'];
 defineRoute(router, prefix, {
     method: 'get',
     path: '/',
-    summary: 'List test items',
+    summary: 'List test items (paginated)',
     tags,
     requireAuth: true,
-    middlewares: [requireAuth, requireAdmin],
+    query: paginationQuerySchema,
+    middlewares: [requireAuth, requireAdmin, validate({ query: paginationQuerySchema })],
     handler: controller.getAll,
 });
 

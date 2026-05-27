@@ -9,6 +9,7 @@ import {
     userIdParamsSchema,
     userResponseSchema,
 } from '../schemas/user.schema.js';
+import { paginationQuerySchema } from '../schemas/pagination.schema.js';
 
 const router = Router();
 const prefix = '/api/users';
@@ -18,11 +19,12 @@ const tags = ['Users'];
 defineRoute(router, prefix, {
     method: 'get',
     path: '/',
-    summary: 'List all users',
+    summary: 'List all users (paginated)',
     tags,
     requireAuth: true,
+    query: paginationQuerySchema,
     response: userResponseSchema.array(),
-    middlewares: [requireAuth, requireAdmin],
+    middlewares: [requireAuth, requireAdmin, validate({ query: paginationQuerySchema })],
     handler: controller.getAllUsers,
 });
 
